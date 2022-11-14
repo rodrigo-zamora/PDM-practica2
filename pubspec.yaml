@@ -33,16 +33,23 @@ dependencies:
     sdk: flutter
   avatar_glow: ^2.0.2
 
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
+  # Functionalities
   record: ^4.4.0
   path_provider: ^2.0.11
   flutter_dotenv: ^5.0.2
-  font_awesome_flutter: ^10.2.1
   url_launcher: ^6.1.6
-  intl: ^0.17.0
+  
+  # UI
+  font_awesome_flutter: ^10.2.1
+  
+  # Firebase
+  firebase_core: ^2.1.0
+  firebase_auth: ^4.0.2
+  cloud_firestore: ^4.0.2
+  firebase_ui_firestore: ^1.0.2
+
+  # Google
+  google_sign_in: ^5.4.2
 
 dev_dependencies:
   flutter_test:

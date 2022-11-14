@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages, no_leading_underscores_for_local_identifiers, unused_local_variable, body_might_complete_normally_nullable, avoid_print, unnecessary_null_comparison, prefer_const_constructors, unnecessary_new
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

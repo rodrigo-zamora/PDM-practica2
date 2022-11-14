@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors_in_immutables, must_be_immutable
-
 part of 'music_bloc.dart';
 
 @immutable

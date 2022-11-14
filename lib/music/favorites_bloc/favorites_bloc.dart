@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages, avoid_print, no_leading_underscores_for_local_identifiers, unused_local_variable
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:bloc/bloc.dart';

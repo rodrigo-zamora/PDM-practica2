@@ -45,3 +45,4 @@ app.*.map.json
 
 # Environment related
 .env
+google-services.json

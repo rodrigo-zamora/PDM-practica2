@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors_in_immutables
-
 part of 'favorites_bloc.dart';
 
 @immutable
