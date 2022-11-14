@@ -4,6 +4,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:music_app/music/music_bloc/music_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'auth_bloc/auth_bloc.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -15,11 +17,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('FindTrackApp'),
-      ),
       body: Column(
         children: [
+          SizedBox(
+            height: 64,
+          ),
           Center(
             child: Container(
               margin: EdgeInsets.only(top: 48),
@@ -38,16 +40,34 @@ class _HomePageState extends State<HomePage> {
           SizedBox(
             height: 48,
           ),
-          Center(
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: IconButton(
-                onPressed: () {
-                  _showFavorites(context);
-                },
-                icon: Icon(Icons.favorite_sharp),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    onPressed: () {
+                      _showFavorites(context);
+                    },
+                    icon: Icon(Icons.favorite_sharp),
+                  ),
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    onPressed: () {
+                      _logoutDialog(context);
+                    },
+                    icon: Icon(Icons.power_settings_new),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -56,6 +76,35 @@ class _HomePageState extends State<HomePage> {
 
   void _showFavorites(BuildContext context) {
     Navigator.pushNamed(context, '/favorites');
+  }
+
+  void _logoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Cerrar sesión'),
+          content: Text(
+              'Al cerrar sesión de su cuenta, será redirigido a la pantalla de Log In. ¿Quiere continuar?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                BlocProvider.of<AuthBloc>(context)
+                    .add(SignOutEvent(buildcontext: context));
+              },
+              child: Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _getRecordImage() {

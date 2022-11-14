@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import 'auth_bloc/auth_bloc.dart';
-
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class LoadingPage extends StatelessWidget {
+  const LoadingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,31 +57,8 @@ class LoginPage extends StatelessWidget {
                     Container(
                       alignment: Alignment.center,
                       width: MediaQuery.of(context).size.width - 32,
-                      child: MaterialButton(
-                        color: Colors.green,
-                        onPressed: () {
-                          BlocProvider.of<AuthBloc>(context).add(
-                            GoogleAuthEvent(buildcontext: context),
-                          );
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16.0, right: 16),
-                              child: FaIcon(
-                                FontAwesomeIcons.google,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            Text(
-                              'Iniciar con Google',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
                       ),
                     )
                   ],

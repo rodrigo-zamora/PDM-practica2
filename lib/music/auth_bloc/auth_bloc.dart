@@ -13,7 +13,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc() : super(AuthInitial()) {
     on<VerifyAuthEvent>(_authVerfication);
-    on<AnonymousAuthEvent>(_authAnonymous);
     on<GoogleAuthEvent>(_authUser);
     on<SignOutEvent>(_signOut);
   }
@@ -53,31 +52,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   FutureOr<void> _authUser(event, emit) async {
     emit(AuthAwaitingState());
     try {
+      print('\x1B[35mAuthenticating user\x1B[0m');
       await _authRepo.signInWithGoogle();
-
-      ScaffoldMessenger.of(event.buildcontext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('Has iniciado sesión'),
-          ),
-        );
-
+      print('\x1B[35mAuth success, emiting state\x1B[0m');
       emit(AuthSuccessState());
     } catch (e) {
-      ScaffoldMessenger.of(event.buildcontext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.red,
-            content: Text('Error al iniciar sesión: $e'),
-          ),
-        );
+      print('\x1B[31mAuth error: $e\x1B[0m');
       emit(AuthErrorState());
     }
-  }
-
-  FutureOr<void> _authAnonymous(event, emit) {
-    // TODO:
   }
 }

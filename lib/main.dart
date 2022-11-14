@@ -6,7 +6,10 @@ import 'package:music_app/music/home_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'music/auth_bloc/auth_bloc.dart';
+import 'music/favorites_page.dart';
+import 'music/loading_page.dart';
 import 'music/login_page.dart';
+import 'music/music_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +38,11 @@ class MusicApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData.dark(),
+      routes: {
+        '/music': (context) => MusicPage(),
+        '/favorites': (context) => FavoritesPage(),
+      },
       home: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthErrorState) {
@@ -42,7 +50,11 @@ class MusicApp extends StatelessWidget {
               ..hideCurrentSnackBar()
               ..showSnackBar(
                 SnackBar(
-                  content: Text(state.toString()),
+                  backgroundColor: Colors.black12,
+                  content: Text(
+                    state.toString(),
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               );
           }
@@ -55,7 +67,7 @@ class MusicApp extends StatelessWidget {
               state is SignOutSuccessState) {
             return LoginPage();
           }
-          return Center(child: CircularProgressIndicator());
+          return LoadingPage();
         },
       ),
     );
