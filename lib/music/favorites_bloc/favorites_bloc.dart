@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:bloc/bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 import 'package:equatable/equatable.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../../repositories/auth/user_auth_repository.dart';
 
 part 'favorites_event.dart';
 part 'favorites_state.dart';
@@ -19,74 +23,59 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     print("Adding music to favorites");
     print("------------------------");
 
-    var _music = event.props[0];
+    Map _music = event.props[0] as Map;
     print("\tMusic to add: $_music");
 
-    print("\tGetting favorites from local storage");
-    Directory root = await getTemporaryDirectory();
-    String _path = "${root.path}/favorites.json";
-    print("\t\tPath: $_path");
-
-    print("\tChecking if file exists");
-    File _file = File(_path);
-    bool _exists = await _file.exists();
-    print("\t\tExists: $_exists");
-
-    if (!_exists) {
-      print("\t\tCreating file...");
-      await _file.create();
-      await _file.writeAsString(jsonEncode([]));
+    print("\tGetting favorites from Firestore");
+    String useruid = UserAuthRepository.userInstance?.currentUser?.uid ?? "";
+    if (useruid == "") {
+      print("\t\tUser not authenticated");
+      return;
     }
 
-    print("\tChecking if file is empty");
-    String _content = await _file.readAsString();
+    final QuerySnapshot result = await FirebaseFirestore.instance
+        .collection('users')
+        .where('id', isEqualTo: useruid)
+        .get();
 
-    if (_content.isEmpty) {
-      print("\t\tWriting empty JSON object to file...");
-      await _file.writeAsString(jsonEncode([]), flush: true);
-    }
+    final List<DocumentSnapshot> documents = result.docs;
 
-    /*
-      Check if the music is already in the favorites list
-     */
-    print("\tChecking if music is already in favorites");
-    List<dynamic> _favorites = jsonDecode(_content);
-    print(_favorites.runtimeType);
-    _music = Map<String, dynamic>.from(_music as Map<String, dynamic>);
-    print(_music.runtimeType);
-    print("\n\n");
-    print("\n\n");
-    print("Favorites: $_favorites\n");
-    print("Music: $_music\n\n");
-
-    bool _isInFavorites = false;
-    for (var _favorite in _favorites) {
-      if (_favorite == _music) {
-        print("\t\tMusic is already in favorites");
-        _isInFavorites = true;
-      }
-    }
-    print("\t\tIs already in favorites: $_isInFavorites");
-
-    if (!_isInFavorites) {
-      try {
-        print("\tAdding new song to favorites");
-        _favorites.add(_music);
-        print("\t\tFavorites: ${_favorites.length}");
-
-        print("\tSaving favorites");
-        await _file.writeAsString(jsonEncode(_favorites));
-        print("\t\tSaved");
-
-        emit(FavoritesUpdatedState(favorites: _favorites));
-      } catch (e) {
-        print("\t\tError: $e");
-        emit(FavoritesErrorState(errorMessage: "Error al guardar favoritos"));
-      }
+    if (documents.length == 0) {
+      print("\t\tUser not found");
+      emit(FavoritesErrorState(errorMessage: "Usuario no encontrado"));
+      return;
     } else {
-      print("\t\tMusic is already in favorites");
-      emit(
-          FavoritesErrorState(errorMessage: "La canción ya está en favoritos"));
+      print("\t\tUser found with ${documents[0]['liked'].length} favorites");
+
+      List<dynamic> favorites = documents[0]['liked'];
+
+      // Check if the music is already in the favorites
+      print("\tChecking if music is already in favorites");
+      bool alreadyInFavorites = false;
+
+      for (var favorite in favorites) {
+        if (mapEquals(favorite, _music)) {
+          alreadyInFavorites = true;
+          break;
+        }
+      }
+      print("\t\tMusic is already in favorites: $alreadyInFavorites");
+
+      if (!alreadyInFavorites) {
+        print("\tAdding music to favorites");
+        favorites.add(_music);
+        print("\t\tFavorites: $favorites");
+        print("\t\tUpdating Firestore");
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(useruid)
+            .update({'liked': favorites});
+        print("\t\tFirestore updated");
+      } else {
+        print("\tMusic already in favorites");
+      }
+
+      emit(FavoritesUpdatedState(favorites: favorites));
     }
   }
 
@@ -97,31 +86,59 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
     emit(FavoritesRemovingState());
 
-    print("\tSong to remove: ${event.musicInfo['title']}");
+    Map _music = event.props[0] as Map;
+    print("\tSong to remove: $_music");
 
-    print("\tGetting favorites from local storage");
-    Directory root = await getTemporaryDirectory();
-    String _path = "${root.path}/favorites.json";
-    print("\t\tPath: $_path");
+    print("\tGetting favorites from Firestore");
+    String useruid = UserAuthRepository.userInstance?.currentUser?.uid ?? "";
+    if (useruid == "") {
+      print("\t\tUser not authenticated");
+      return;
+    }
 
-    try {
-      List<dynamic> _favorites = jsonDecode(await File(_path).readAsString());
-      print("\t\tFavorites: ${_favorites.length}");
+    final QuerySnapshot result = await FirebaseFirestore.instance
+        .collection('users')
+        .where('id', isEqualTo: useruid)
+        .get();
 
-      print("\tRemoving song from favorites");
-      _favorites.removeWhere(
-          (element) => element['title'] == event.musicInfo['title']);
-      print("\t\tFavorites: ${_favorites.length}");
+    final List<DocumentSnapshot> documents = result.docs;
 
-      print("\tSaving favorites");
-      await File(_path).writeAsString(jsonEncode(_favorites));
-      print("\t\tSaved");
+    if (documents.length == 0) {
+      print("\t\tUser not found");
+      emit(FavoritesErrorState(errorMessage: "Usuario no encontrado"));
+      return;
+    } else {
+      print("\t\tUser found with ${documents[0]['liked'].length} favorites");
 
-      emit(FavoritesRemovedState());
-      emit(FavoritesUpdatedState(favorites: _favorites));
-    } catch (e) {
-      print("\t\tError: $e");
-      emit(FavoritesErrorState(errorMessage: "Error al eliminar favoritos"));
+      List<dynamic> favorites = documents[0]['liked'];
+
+      // Check if the music is already in the favorites
+      print("\tChecking if music is already in favorites");
+      bool alreadyInFavorites = false;
+
+      for (var favorite in favorites) {
+        if (mapEquals(favorite, _music)) {
+          alreadyInFavorites = true;
+          break;
+        }
+      }
+      print("\t\tMusic is already in favorites: $alreadyInFavorites");
+
+      if (alreadyInFavorites) {
+        print("\tRemoving music from favorites");
+        favorites.removeWhere((element) => mapEquals(element, _music));
+        print("\t\tFavorites: $favorites");
+        print("\t\tUpdating Firestore");
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(useruid)
+            .update({'liked': favorites});
+        print("\t\tFirestore updated");
+      } else {
+        print("\tMusic not in favorites");
+      }
+
+      emit(FavoritesUpdatedState(favorites: favorites));
     }
   }
 
@@ -132,33 +149,28 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
 
     emit(FavoritesLoadingState());
 
-    print("\tGetting favorites from local storage");
-    Directory root = await getTemporaryDirectory();
-    String _path = "${root.path}/favorites.json";
-    print("\t\tPath: $_path");
-
-    print("\tChecking if file exists");
-    File _file = File(_path);
-    bool _exists = await _file.exists();
-    print("\t\tExists: $_exists");
-
-    if (!_exists) {
-      print("\t\tCreating file...");
-      await _file.create();
-      await _file.writeAsString(jsonEncode([]));
+    print("\tGetting favorites from Firestore");
+    String useruid = UserAuthRepository.userInstance?.currentUser?.uid ?? "";
+    if (useruid == "") {
+      print("\t\tUser not authenticated");
+      return;
     }
 
-    print("\tChecking if file is empty");
-    String _content = await _file.readAsString();
+    final QuerySnapshot result = await FirebaseFirestore.instance
+        .collection('users')
+        .where('id', isEqualTo: useruid)
+        .get();
 
-    if (_content.isEmpty) {
-      print("\t\tWriting empty JSON object to file...");
-      await _file.writeAsString(jsonEncode([]), flush: true);
+    final List<DocumentSnapshot> documents = result.docs;
+
+    if (documents.length == 0) {
+      print("\t\tUser not found");
+      emit(FavoritesErrorState(errorMessage: "Usuario no encontrado"));
+      return;
+    } else {
+      List<dynamic> favorites = documents[0]['liked'];
+      print("\t\tUser found with ${favorites.length} favorites");
+      emit(FavoritesUpdatedState(favorites: favorites));
     }
-
-    List<dynamic> _favorites = jsonDecode(_content);
-    print("\t\tFavorites: ${_favorites.length}");
-
-    emit(FavoritesLoadedState(favorites: _favorites));
   }
 }
