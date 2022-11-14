@@ -1,11 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:meta/meta.dart';
 import 'package:equatable/equatable.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../repositories/auth/user_auth_repository.dart';
 
